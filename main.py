@@ -1,4 +1,6 @@
 from flask import Flask, render_template
+import tlqkf
+import json
 import school_api
 
 if __name__ == "__main__" :
@@ -9,8 +11,12 @@ if __name__ == "__main__" :
     }
 
     school_api.get_info(**school_info)
+    school_api.meal_service()
 
-    print(school_api.meal_service())
+    # school_api.meal_service()
+
+    with open("output.json", "w", encoding="utf-8") as file :
+        json.dump(school_api.school_meal, file, indent=4, ensure_ascii=False)
 
     # print(time_table())
 

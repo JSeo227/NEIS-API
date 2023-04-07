@@ -9,39 +9,47 @@ school_info = {
     "school": "가락고등학교",
 }
 
-# 기본값
-school_meal_data = {
+# 급식 정보
+school_meal_info = {
     "KEY": "9da752136d5849b985288deb5036dba1",
     "Type": "xml",
     # 아래는 다 완성되면 지우자
-    # 'ATPT_OFCDC_SC_CODE': 'B10', 
-    # 'SD_SCHUL_CODE': '7010057',
+    'ATPT_OFCDC_SC_CODE': 'B10', 
+    'SD_SCHUL_CODE': '7010057',
     # main에서 입력받을 값
     "MLSV_YMD": 202205
 }
 
-school_time_data = {
+# 시간표 정보
+school_time_info = {
     "KEY": "9da752136d5849b985288deb5036dba1",
     "Type": "xml",
     # 아래는 다 완성되면 지우자
-    # 'ATPT_OFCDC_SC_CODE': 'B10', 
-    # 'SD_SCHUL_CODE': '7010057',
+    "ATPT_OFCDC_SC_CODE": "B10", 
+    'SD_SCHUL_CODE': '7010057',
     # main에서 입력받을 값
     "AY": 2023,
     "SEM": 1,
     "ALL_TI_YMD": 202303
 }
 
-# 함수를 통해 받을 값을 저장하는 변수
+# URL 정보
 school_url = {
     "base_url": "http://open.neis.go.kr/hub/",
-    "basic_url": "schoolInfo",
+    "basic_sub_url": "schoolInfo",
     "meal_sub_url": "mealServiceDietInfo",
     "time_sub_url": "hisTimetable"
 }
 
 # 급식 데이터
-school_meal = {}
+school_meal = {
+    "mealInfo": []
+}
+
+# 시간표 데이터
+time_table = {
+    "timeInfo": []
+}
 
 # CData -> get_info = soup.find(text=lambda text: isinstance(text, CData))
 # lambda 사용 : https://www.tomordonez.com/python-lambda-beautifulsoup/
@@ -72,12 +80,13 @@ def get_info(**kwargs) :
 
 # 교육청 코드 + 학교 코드
 def get_data(self) :
-    global get_office_of_education_code, get_school_code
 
-    URL = school_url["base_url"] + school_url["basic_url"]
-    
-    response = get(f"{URL}?KEY={school_meal_data['KEY']}&Type={school_meal_data['Type']}")
-    # response = get(URL, school_meal_data)
+    global office_of_education_code, school_code
+
+    URL = school_url["base_url"] + school_url["basic_sub_url"]
+
+    # == response = get(URL, school_meal_info)
+    response = get(f"{URL}?KEY={school_meal_info['KEY']}&Type={school_meal_info['Type']}")
 
     if response.status_code != 200 :
         print("Can't request website")
@@ -86,26 +95,26 @@ def get_data(self) :
         print("Sucess!")
         soup = BeautifulSoup(response.text, "html.parser")
 
-        get_office_of_education = soup.find(text=school_info["office_of_education"])
-        get_office_of_education_code = get_office_of_education.find_previous(text=lambda text: isinstance(text, CData))
-        school_meal_data.update({"ATPT_OFCDC_SC_CODE": get_office_of_education_code})
-        school_time_data.update({"ATPT_OFCDC_SC_CODE": get_office_of_education_code})
+        office_of_education_name = soup.find(text=school_info["office_of_education"])
+        office_of_education_code = office_of_education_name.find_previous(text=lambda text: isinstance(text, CData))
+        school_meal_info.update({"ATPT_OFCDC_SC_CODE": office_of_education_code})
+        school_time_info.update({"ATPT_OFCDC_SC_CODE": office_of_education_code})
 
-        get_school = soup.find(text=school_info["school"])
-        get_school_code = get_school.find_previous(text=lambda text: isinstance(text, CData))
-        school_meal_data.update({"SD_SCHUL_CODE": get_school_code})
-        school_time_data.update({"SD_SCHUL_CODE": get_school_code})
+        school_name = soup.find(text=school_info["office_of_education"])
+        school_code = school_name.find_previous(text=lambda text: isinstance(text, CData))
+        school_meal_info.update({"SD_SCHUL_CODE": school_code})
+        school_time_info.update({"SD_SCHUL_CODE": school_code})
         
     return self
 
 # 급식 식단 정보
-@get_data
+# @get_data
 def meal_service() :
-    global meal_data, meal_list, meal_list_2, date_data, date_list
+    global date_list, meal_list
 
     URL = school_url["base_url"] + school_url["meal_sub_url"]
 
-    response = get(URL, school_meal_data)
+    response = get(URL, school_meal_info)
 
     if response.status_code != 200 :
         print("Can't request website")
@@ -114,49 +123,33 @@ def meal_service() :
         print("Sucess!")
         soup = BeautifulSoup(response.text, "html.parser")
 
-        get_school_meal_date = soup.find_all("mlsv_ymd")
+        total_cnt = int(soup.find("list_total_count").text)
 
-        _cnt = len(get_school_meal_date)
-        date_data = [i for i in range(_cnt)]
-        for i, info in enumerate(get_school_meal_date) :
-            date_data[i] = info.find(text=lambda text: isinstance(text, CData))
+        date_list = soup.find_all("mlsv_ymd")
+        meal_list = soup.find_all("ddish_nm")
 
-        date_list = list_chunk(date_data, 1)
+        for i in range(total_cnt) :
+            date_list[i] = date_list[i].get_text()
+            meal_list[i] = meal_list[i].get_text()
 
-        get_school_meal_info = soup.find_all("ddish_nm")
-       
-        meal_data = [i for i in range(_cnt)]
+        meal_list = list_chunk(meal_list, 1)
 
-        for i, info in enumerate(get_school_meal_info) :
-            meal_data[i] = info.find(text=lambda text: isinstance(text, CData))
+        for i in range(total_cnt) :
+            meal_str = "".join(meal_list[i])
+            meal_str = meal_str.split("<br/>")
+            meal_list[i] = regular_expression(meal_str)
 
-        meal_list = list_chunk(meal_data, 1)
+        for i in range(total_cnt) :
+            meal_info = {}
+            meal_info.update({"office_of_education": school_info["office_of_education"]})
+            meal_info.update({"school": school_info["school"]})
+            meal_info.update({"date": date_list[i]})
+            meal_info.update({"meal": meal_list[i]})
+            school_meal["mealInfo"].append(meal_info)
 
-        for i in range(_cnt) :
-            meal_str = meal_list[i][0]
-            meal_list_2 = meal_str.split("<br/>")
-            meal_list_2 = regular_expression(meal_list_2)
-            school_meal.update({"".join(date_list[i]): meal_list_2})
-        
+        print(school_meal)
         return school_meal
        
 # 고등학생 시간표 (준비중)
 # @get_data
 # def time_table(*args, **kwargs) :
-    
-# URL = school_url["base_url"] + school_url["time_sub_url"]
-# response = get(URL, school_time_data)
-# soup = BeautifulSoup(response.text,"html.parser")
-
-# _perio = (soup.find("perio")).find(text=lambda text: isinstance(text, CData))
-# _class = (soup.find("itrt_cntnt")).find(text=lambda text: isinstance(text, CData))
-# _date = (soup.find("all_ti_ymd")).find(text=lambda text: isinstance(text, CData))
-# # _date = ".".join(_date)
-# _date = list(_date)
-# _date.insert(4, ".")
-# _date.insert(7, ".")
-# _date.insert(10, ".")
-# _date = "".join(_date)
-# print(f"{_date}")
-# print(f"{_perio}교시")
-# print(f"{_class}")
