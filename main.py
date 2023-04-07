@@ -1,7 +1,6 @@
-from flask import Flask, render_template
-import tlqkf
+# from flask import Flask, render_template
 import json
-import school_api
+import school_api_test
 
 if __name__ == "__main__" :
     
@@ -10,23 +9,13 @@ if __name__ == "__main__" :
         "school": "가락고등학교"
     }
 
-    school_api.get_info(**school_info)
-    school_api.meal_service()
+    school_api_test.get_info(**school_info)
+    school_api_test.get_data()
+    school_api_test.meal_service()
 
-    # school_api.meal_service()
 
     with open("output.json", "w", encoding="utf-8") as file :
-        json.dump(school_api.school_meal, file, indent=4, ensure_ascii=False)
-
-    # print(time_table())
-
-    # input으로 값을 받으면 다음과 같은 형식으로 출력
-    # 202005
-
-
-#    나중에 작성
-
-
+        json.dump(school_api_test.school_meal, file, indent=4, ensure_ascii=False)
 
 #     print(params["param"]["CODE"])
 

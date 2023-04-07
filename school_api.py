@@ -5,8 +5,8 @@ import re
 # input을 통해 입력받은 값
 # main.py에 작성
 school_info = {
-    "office_of_education": "서울특별시교육청",
-    "school": "가락고등학교",
+    # "office_of_education": "서울특별시교육청",
+    # "school": "가락고등학교",
 }
 
 # 급식 정보
@@ -14,10 +14,10 @@ school_meal_info = {
     "KEY": "9da752136d5849b985288deb5036dba1",
     "Type": "xml",
     # 아래는 다 완성되면 지우자
-    'ATPT_OFCDC_SC_CODE': 'B10', 
-    'SD_SCHUL_CODE': '7010057',
+    # 'ATPT_OFCDC_SC_CODE': 'B10', 
+    # 'SD_SCHUL_CODE': '7010057',
     # main에서 입력받을 값
-    "MLSV_YMD": 202205
+    # "MLSV_YMD": 202205
 }
 
 # 시간표 정보
@@ -75,11 +75,9 @@ def regular_expression(_list) :
 # main.py로 부터 값을 받음
 def get_info(**kwargs) :
     school_info.update(kwargs)
-    # school_data({"MLSV_YMD": (변수명)})
-    # print("school_info :", school_info)
 
 # 교육청 코드 + 학교 코드
-def get_data(self) :
+def get_data() :
 
     global office_of_education_code, school_code
 
@@ -100,12 +98,13 @@ def get_data(self) :
         school_meal_info.update({"ATPT_OFCDC_SC_CODE": office_of_education_code})
         school_time_info.update({"ATPT_OFCDC_SC_CODE": office_of_education_code})
 
-        school_name = soup.find(text=school_info["office_of_education"])
+        school_name = soup.find(text=school_info["school"])
         school_code = school_name.find_previous(text=lambda text: isinstance(text, CData))
         school_meal_info.update({"SD_SCHUL_CODE": school_code})
         school_time_info.update({"SD_SCHUL_CODE": school_code})
-        
-    return self
+
+        school_meal_info.update({"MLSV_YMD": 202205})
+
 
 # 급식 식단 정보
 # @get_data
